@@ -11,12 +11,7 @@ const {
   emailExists,
   userExistsById,
 } = require('../helpers/db-validators')
-const {
-  validateFields,
-  validateJWT,
-  hasRole,
-  isTeacherRole,
-} = require('../middlewares')
+const { validateFields, validateJWT, isTeacherRole } = require('../middlewares')
 
 const router = Router()
 
