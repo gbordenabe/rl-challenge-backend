@@ -17,8 +17,8 @@ const usersGet = async (req, res = response) => {
 }
 
 const usersPost = async (req, res = response) => {
-  const { name, email, password, role } = req.body
-  const user = new User({ name, email, password, role })
+  const { name, email, password, role, rooms } = req.body
+  const user = new User({ name, email, password, role, rooms })
 
   const salt = bcryptjs.genSaltSync()
   user.password = bcryptjs.hashSync(password, salt)
@@ -29,11 +29,16 @@ const usersPost = async (req, res = response) => {
 
 const usersPut = async (req, res = response) => {
   const { id } = req.params
-  const { _id, password, email, ...etc } = req.body
+  const { _id, password, email, rooms, ...etc } = req.body
 
   if (password) {
     const salt = bcryptjs.genSaltSync()
     etc.password = bcryptjs.hashSync(password, salt)
+  }
+
+  if (rooms) {
+    const originalUser = await User.findById(id)
+    etc.rooms = [...originalUser.rooms, ...rooms]
   }
 
   const user = await User.findByIdAndUpdate(id, etc)

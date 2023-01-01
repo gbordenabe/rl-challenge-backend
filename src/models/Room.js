@@ -16,11 +16,13 @@ const RoomSchema = Schema({
     default: true,
     require: true,
   },
-  members: {
-    type: [Schema.Types.ObjectId],
-    ref: 'User',
-    default: [],
-  },
+  members: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: [],
+    },
+  ],
 })
 
 RoomSchema.methods.toJSON = function () {

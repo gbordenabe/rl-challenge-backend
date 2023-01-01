@@ -54,10 +54,15 @@ const createRoom = async (req, res = response) => {
 
 const updateRoom = async (req, res = response) => {
   const { id } = req.params
-  const { state, ...data } = req.body
+  const { state, members, ...data } = req.body
 
   if (data.name) {
     data.name = data.name.toUpperCase()
+  }
+
+  if (members) {
+    const originalMembers = await Room.findById(id)
+    data.members = [...originalMembers.members, ...members]
   }
 
   const room = await Room.findByIdAndUpdate(id, data, { new: true })

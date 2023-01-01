@@ -30,6 +30,7 @@ router.post(
     check('email').custom(emailExists),
     check('role', 'Role is required').not().isEmpty(),
     check('role').custom(isValidRole),
+    check('rooms').optional().isArray().isMongoId(),
     validateFields,
   ],
   usersPost
@@ -42,7 +43,8 @@ router.put(
     isTeacherRole,
     check('id', 'Id is not valid').isMongoId(),
     check('id').custom(userExistsById),
-    check('role').custom(isValidRole),
+    check('role').optional().custom(isValidRole),
+    check('rooms').optional().isArray().isMongoId(),
     validateFields,
   ],
   usersPut

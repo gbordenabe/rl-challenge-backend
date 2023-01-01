@@ -26,16 +26,20 @@ const UserSchema = Schema({
     type: Boolean,
     default: true,
   },
-  siblings: {
-    type: [Schema.Types.ObjectId],
-    ref: 'User',
-    default: [],
-  },
-  rooms: {
-    type: [Schema.Types.ObjectId],
-    ref: 'Room',
-    default: [],
-  },
+  siblings: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: [],
+    },
+  ],
+  rooms: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Room',
+      default: [],
+    },
+  ],
 })
 
 UserSchema.methods.toJSON = function () {
