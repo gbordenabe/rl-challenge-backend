@@ -34,6 +34,7 @@ router.post(
     check('role', 'Role is required').not().isEmpty(),
     check('role').custom(isValidRole),
     check('rooms').optional().isArray().isMongoId(),
+    check('siblings').optional().isArray().isMongoId(),
     validateFields,
   ],
   usersPost
