@@ -33,8 +33,10 @@ const usersPost = async (req, res = response) => {
   user.password = bcryptjs.hashSync(password, salt)
 
   const newUser = await user.save()
-  await sincronizeRooms(rooms, newUser._id)
-  await sincronizeSiblings(siblings, newUser._id)
+  await Promise.all([
+    sincronizeRooms(rooms, newUser._id),
+    sincronizeSiblings(siblings, newUser._id),
+  ])
   res.json(user)
 }
 
@@ -50,12 +52,14 @@ const usersPut = async (req, res = response) => {
   if (rooms) {
     data.rooms = rooms
   }
-  await sincronizeRooms(rooms, id)
 
   if (siblings) {
     data.siblings = siblings
   }
-  await sincronizeSiblings(siblings, id)
+  await Promise.all([
+    sincronizeRooms(rooms, id),
+    sincronizeSiblings(siblings, id),
+  ])
   const user = await User.findByIdAndUpdate(id, data)
 
   res.json(user)
@@ -64,12 +68,11 @@ const usersPut = async (req, res = response) => {
 const usersDelete = async (req, res = response) => {
   const { id } = req.params
 
-  let user = await User.findByIdAndUpdate(id, { state: false })
-  user = await User.findById(id)
+  const deletedUser = await User.findByIdAndDelete(id)
 
-  res.json({
-    user,
-  })
+  await Promise.all([sincronizeRooms([], id), sincronizeSiblings([], id)])
+
+  res.json(deletedUser)
 }
 
 const sincronizeRooms = async (rooms, userId) => {

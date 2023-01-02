@@ -75,10 +75,10 @@ const updateRoom = async (req, res = response) => {
 const deleteRoom = async (req, res = response) => {
   const { id } = req.params
 
-  const room = await Room.findByIdAndUpdate(id, { state: false }, { new: true })
-  await room.save()
+  const deletedRoom = await Room.findByIdAndDelete(id)
+  await sincronizeMembers([], id)
 
-  res.json(room)
+  res.json(deletedRoom)
 }
 
 const sincronizeMembers = async (members, roomId) => {
