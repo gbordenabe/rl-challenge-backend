@@ -82,23 +82,15 @@ const deleteRoom = async (req, res = response) => {
 }
 
 const sincronizeMembers = async (members, roomId) => {
-  if (members.length === 0) {
-    const users = await User.find()
-    users.forEach(async user => {
+  const allUsers = await User.find()
+  allUsers.forEach(async user => {
+    if (members.includes(user._id.toString())) {
+      if (!user.rooms.includes(roomId)) user.rooms.push(roomId)
+    } else {
       user.rooms = user.rooms.filter(id => id != roomId)
-      await user.save()
-    })
-  } else {
-    members.forEach(async memberId => {
-      const user = await User.findById(memberId)
-      if (!user.rooms.includes(roomId)) {
-        user.rooms.push(roomId)
-      } else {
-        user.rooms = user.rooms.filter(id => id != roomId)
-      }
-      await user.save()
-    })
-  }
+    }
+    await user.save()
+  })
 }
 
 module.exports = {
