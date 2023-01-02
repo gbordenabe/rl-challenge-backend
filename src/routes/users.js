@@ -5,6 +5,7 @@ const {
   usersPut,
   usersPost,
   usersDelete,
+  userGetById,
 } = require('../controllers/users')
 const {
   isValidRole,
@@ -17,11 +18,13 @@ const router = Router()
 
 router.get('/', usersGet)
 
+router.get('/:id', userGetById)
+
 router.post(
   '/',
   [
-    validateJWT,
-    isTeacherRole,
+    //validateJWT,
+    //isTeacherRole,
     check('name', 'Name is required').not().isEmpty(),
     check('password', 'Password must be at least 6 characters').isLength({
       min: 6,
@@ -45,6 +48,7 @@ router.put(
     check('id').custom(userExistsById),
     check('role').optional().custom(isValidRole),
     check('rooms').optional().isArray().isMongoId(),
+    check('siblings').optional().isArray().isMongoId(),
     validateFields,
   ],
   usersPut

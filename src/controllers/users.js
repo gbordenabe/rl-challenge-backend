@@ -1,5 +1,5 @@
 const { response } = require('express')
-const { User } = require('../models')
+const { User, Room } = require('../models')
 const bcryptjs = require('bcryptjs')
 
 const usersGet = async (req, res = response) => {
@@ -16,6 +16,13 @@ const usersGet = async (req, res = response) => {
   })
 }
 
+const userGetById = async (req, res = response) => {
+  const { id } = req.params
+  const user = await User.findById(id).populate('rooms', ['name', 'number'])
+
+  res.json(user)
+}
+
 const usersPost = async (req, res = response) => {
   const { name, email, password, role, rooms } = req.body
   const user = new User({ name, email, password, role, rooms })
@@ -29,19 +36,22 @@ const usersPost = async (req, res = response) => {
 
 const usersPut = async (req, res = response) => {
   const { id } = req.params
-  const { _id, password, email, rooms, ...etc } = req.body
+  const { _id, password, rooms = [], siblings = [], ...data } = req.body
 
   if (password) {
     const salt = bcryptjs.genSaltSync()
-    etc.password = bcryptjs.hashSync(password, salt)
+    data.password = bcryptjs.hashSync(password, salt)
   }
 
   if (rooms) {
-    const originalUser = await User.findById(id)
-    etc.rooms = [...originalUser.rooms, ...rooms]
+    data.rooms = rooms
   }
+  await sincronizeRooms(rooms, id)
 
-  const user = await User.findByIdAndUpdate(id, etc)
+  if (siblings) {
+    data.siblings = siblings
+  }
+  const user = await User.findByIdAndUpdate(id, data)
 
   res.json(user)
 }
@@ -57,4 +67,24 @@ const usersDelete = async (req, res = response) => {
   })
 }
 
-module.exports = { usersGet, usersPut, usersPost, usersDelete }
+const sincronizeRooms = async (rooms, userId) => {
+  if (rooms.length === 0) {
+    const dbRooms = await Room.find()
+    dbRooms.forEach(async dbRoom => {
+      dbRoom.members = dbRoom.members.filter(id => id != userId)
+      await dbRoom.save()
+    })
+  } else {
+    rooms.forEach(async memberId => {
+      const dbRoom = await Room.findById(memberId)
+      if (!dbRoom.members.includes(userId)) {
+        dbRoom.members.push(userId)
+      } else {
+        dbRoom.members = dbRoom.members.filter(id => id != userId)
+      }
+      await dbRoom.save()
+    })
+  }
+}
+
+module.exports = { usersGet, usersPut, usersPost, usersDelete, userGetById }

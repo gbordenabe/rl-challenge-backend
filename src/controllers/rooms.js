@@ -1,5 +1,5 @@
 const { response } = require('express')
-const { Room } = require('../models')
+const { Room, User } = require('../models')
 
 const getRooms = async (req, res = response) => {
   const query = { state: true }
@@ -25,7 +25,7 @@ const getRoomById = async (req, res = response) => {
 
 const createRoom = async (req, res = response) => {
   const name = req.body.name.toUpperCase()
-  const number = req.body.number
+  const { members = [], number } = req.body
 
   const roomNameDB = await Room.findOne({ name })
   if (roomNameDB) {
@@ -44,26 +44,27 @@ const createRoom = async (req, res = response) => {
   const data = {
     name,
     number,
-    members: req.body.members,
+    members,
   }
 
   const room = new Room(data)
   await room.save()
+  await sincronizeMembers(members, room._id)
   res.status(201).json(room)
 }
 
 const updateRoom = async (req, res = response) => {
   const { id } = req.params
-  const { state, members, ...data } = req.body
+  const { state, members = [], ...data } = req.body
 
   if (data.name) {
     data.name = data.name.toUpperCase()
   }
 
   if (members) {
-    const originalMembers = await Room.findById(id)
-    data.members = [...originalMembers.members, ...members]
+    data.members = members
   }
+  await sincronizeMembers(members, id)
 
   const room = await Room.findByIdAndUpdate(id, data, { new: true })
   await room.save()
@@ -78,6 +79,26 @@ const deleteRoom = async (req, res = response) => {
   await room.save()
 
   res.json(room)
+}
+
+const sincronizeMembers = async (members, roomId) => {
+  if (members.length === 0) {
+    const users = await User.find()
+    users.forEach(async user => {
+      user.rooms = user.rooms.filter(id => id != roomId)
+      await user.save()
+    })
+  } else {
+    members.forEach(async memberId => {
+      const user = await User.findById(memberId)
+      if (!user.rooms.includes(roomId)) {
+        user.rooms.push(roomId)
+      } else {
+        user.rooms = user.rooms.filter(id => id != roomId)
+      }
+      await user.save()
+    })
+  }
 }
 
 module.exports = {
